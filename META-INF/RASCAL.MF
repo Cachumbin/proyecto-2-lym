@@ -1,4 +1,4 @@
 Manifest-Version: 0.0.1
 Project-Name: proyecto-2-lym
-Source: src/main/rascal
+Source: src
 Require-Libraries:
