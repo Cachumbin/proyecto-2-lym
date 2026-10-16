@@ -1,150 +1,196 @@
 module lang::objectilang::Syntax
 
 /*
- * Sintaxis concreta de Objectilang (Proyecto 2, Fase 4).
+ * Sintaxis concreta de Objectilang (Proyecto 2).
  *
- * Decisiones de diseño que cambian respecto al documento de gramática:
- *  - El menos unario "-" se elimina. Sin separadores entre sentencias,
- *    "a - b" también se podría leer como "a" seguido de "-b". La negación
- *    unaria se escribe con "neg".
- *  - Una referencia o un "new" seguido inmediatamente de "(" se lee como
- *    llamada o argumentos del constructor, no como una sentencia nueva.
- *  - "=" es asignación a nivel de sentencia y también igualdad en
- *    expresiones, como en la lista de símbolos del enunciado. Un "x = y"
- *    suelto puede salir ambiguo. Los ejemplos del enunciado no lo tienen.
+ * Sigue la gramática del Proyecto 1 con sus nombres en español. Rascal exige
+ * que los no terminales empiecen con mayúscula, por eso objeto_creador se
+ * escribe ObjetoCreador. Los ajustes respecto a esa gramática están
+ * explicados en el documento de cambios.
  */
 
-// ---------- Layout y comentarios ----------
+// ---------- Espacios y comentarios ----------
 
-layout Layout = WhitespaceOrComment* !>> [\ \t\n\r] !>> "//";
+layout Layout = EspacioOComentario* !>> [\ \t\n\r] !>> "//";
 
-lexical WhitespaceOrComment
+lexical EspacioOComentario
   = [\ \t\n\r]
   | @category="Comment" "//" ![\n]* $
   ;
 
-// ---------- Palabras reservadas y léxico ----------
+// ---------- Palabras reservadas, identificadores y literales ----------
 
-keyword Reserved
+keyword Reservada
   = "object" | "extends" | "method" | "val" | "var" | "new" | "override"
   | "if" | "then" | "else" | "for" | "in" | "true" | "false"
   | "and" | "or" | "neg"
   ;
 
-lexical Id = ([a-zA-Z] [a-zA-Z0-9]* !>> [a-zA-Z0-9]) \ Reserved;
-lexical IntLit = [0-9]+ !>> [0-9];
-lexical RealLit = [0-9]+ "." [0-9]+ !>> [0-9];
+lexical Identificador = ([a-zA-Z] [a-zA-Z0-9]* !>> [a-zA-Z0-9]) \ Reservada;
 
-lexical StringLit = "\"" StringPart* "\"";
-lexical StringPart
-  = StringChars
-  | "$" Id
-  | "${" Expr "}"
-  ;
-lexical StringChars = ![\"$]+ !>> ![\"$];
+// Igual que Identificador. Existe solo para resaltar los nombres de objetos como tipos.
+lexical NombreObjeto = @category="Type" Identificador;
 
-// ---------- Programa y sentencias ----------
-
-start syntax Program = program: Stmt* stmts;
-
-syntax Stmt
-  = objectDef: "object" Id name TypeParams? tparams Constructor? ctor Extends? parent
-  | valDecl: "val" Id name TypeAnnot? tp Init? init
-  | varDecl: "var" Id name TypeAnnot? tp Init? init
-  | assign: Ref target "=" Expr rhs
-  | mainMethod: "method" "main" Block body
-  | methodDef: Id owner "." {Id "."}+ names "=" "method" "(" {Param ","}* params ")" TypeAnnot? ret MethodBody? body
-  | overrideDef: "override" Id name "(" {Param ","}* params ")" TypeAnnot? ret "=" Block body
-  | forLoop: "for" "(" Pat pat IterOp op Expr src ")" Body body
-  | exprStmt: Expr!eqOp e
+// La anotación va sobre un solo no terminal. Si va directo sobre una secuencia
+// como [0-9]+ "." [0-9]+, Rascal la lee como parte de una expresión y da ambigüedad.
+lexical Numero = @category="Constant" NumeroTexto;
+lexical NumeroTexto
+  = [0-9]+ !>> [0-9]
+  | [0-9]+ "." [0-9]+ !>> [0-9]
   ;
 
-// ---------- Objetos, tipos y genéricos ----------
-
-syntax TypeParams = typeParams: "[" {TypeParam ","}+ params "]";
-
-syntax TypeParam
-  = covariant: "+" Id name
-  | contravariant: "-" Id name
-  | invariant: Id name
+syntax Booleano
+  = verdadero: "true"
+  | falso: "false"
   ;
 
-syntax Constructor = ctor: "(" {Field ","}+ fields ")";
+lexical Cadena = @category="Constant" CadenaTexto;
+lexical CadenaTexto = "\"" ElementoCadena* "\"";
+lexical ElementoCadena
+  = CaracterTexto
+  | "$" "{" Expresion "}"
+  | "$" Identificador
+  ;
+lexical CaracterTexto = ![\"$];
 
-syntax Field
-  = valField: "val" Id name ":" TypeRef tp
-  | varField: "var" Id name ":" TypeRef tp
+// ---------- Programa e instrucciones ----------
+
+start syntax S = s: Instruccion* instrucciones;
+
+syntax Instruccion
+  = ObjetoCreador
+  | VariableDeclaracion
+  | VariableAsignacion
+  | MetodoDeclaracion
+  | Ciclo
+  | instruccionExpresion: Expresion!igual e
   ;
 
-syntax Extends = extendsClause: "extends" TypeRef parent;
+// ---------- Objetos y tipos ----------
 
-syntax TypeRef = typeRef: Id name TypeArgs? args;
-syntax TypeArgs = typeArgs: "[" {TypeRef ","}+ args "]";
-syntax TypeAnnot = typeAnnot: ":" TypeRef tp;
-syntax Init = init: "=" Expr rhs;
+syntax ObjetoCreador
+  = objetoCreador: "object" NombreObjeto nombre ParametrosDefinicion? genericos Constructor? constructor Extiende? extiende
+  ;
+
+syntax Objeto = objeto: NombreObjeto nombre ParametrosUso? parametros;
+syntax Extiende = extiende: "extends" Objeto ob;
+
+syntax ParametrosDefinicion = parametrosDefinicion: "[" {ParametroDefinicion ","}+ parametros "]";
+
+syntax ParametroDefinicion
+  = covariante: "+" NombreObjeto nombre
+  | contravariante: "-" NombreObjeto nombre
+  | invariante: NombreObjeto nombre
+  ;
+
+syntax ParametrosUso = parametrosUso: "[" {Objeto ","}+ objetos "]";
+
+syntax Constructor = constructor: "(" {ParametroConstructor ","}+ parametros ")";
+
+syntax ParametroConstructor
+  = parametroVal: "val" Identificador nombre AnotacionTipo tipo
+  | parametroVar: "var" Identificador nombre AnotacionTipo tipo
+  ;
+
+syntax AnotacionTipo = anotacionTipo: ":" Objeto ob;
+
+// ---------- Variables ----------
+
+syntax VariableDeclaracion
+  = valDeclaracion: "val" Identificador nombre AnotacionTipo? tipo Inicializacion? valor
+  | varDeclaracion: "var" Identificador nombre AnotacionTipo? tipo Inicializacion? valor
+  ;
+
+syntax Inicializacion = inicializacion: "=" Expresion valor;
+
+syntax VariableAsignacion = variableAsignacion: RutaOVariable destino "=" Expresion valor;
 
 // ---------- Métodos ----------
 
-syntax Param = param: Id name ":" TypeRef tp;
-syntax MethodBody = methodBody: "="? Block block;
-syntax Block = block: "{" Stmt* stmts "}";
-
-// ---------- Control de flujo ----------
-
-syntax Pat
-  = varPat: Id name
-  | tuplePat: "(" {Id ","}+ names ")"
+syntax MetodoDeclaracion
+  = MetodoPrincipal
+  | MetodoExterno
+  | MetodoOverride
   ;
 
-syntax IterOp
-  = fromOp: "\<-"
-  | inOp: "in"
+syntax MetodoPrincipal = metodoPrincipal: "method" "main" Bloque b;
+
+syntax MetodoExterno
+  = metodoExterno: NombreObjeto nombre "." {Identificador "."}+ ruta "=" "method" "(" {ParametroMetodo ","}* parametros ")" AnotacionTipo? tipo CuerpoMetodo? cuerpo
   ;
 
-syntax Body
-  = blockBody: Block b
-  | exprBody: Expr e
+syntax CuerpoMetodo = cuerpoMetodo: "="? Bloque b;
+
+syntax MetodoOverride
+  = metodoOverride: "override" Identificador nombre "(" {ParametroMetodo ","}* parametros ")" AnotacionTipo? tipo "=" Bloque b
   ;
 
-// ---------- Referencias, llamadas y acceso ----------
+syntax ParametroMetodo = parametroMetodo: Identificador nombre AnotacionTipo tipo;
 
-syntax Ref
-  = name: Id id
-  | access: Ref target "." Id field
-  | call: Ref target "(" {Expr ","}* args ")"
+// ---------- Bloques, ciclos y cuerpos ----------
+
+syntax Bloque = bloque: "{" Instruccion* instrucciones "}";
+
+syntax Ciclo
+  = ciclo: "for" "(" Patron patron OperadorIteracion operador Expresion coleccion ")" Cuerpo cuerpo
   ;
 
-syntax NewArgs = newArgs: "(" {Expr ","}* args ")";
+syntax Patron
+  = patronVariable: Identificador nombre
+  | patronTupla: "(" {Identificador ","}+ nombres ")"
+  ;
+
+syntax OperadorIteracion
+  = desde: "\<-"
+  | en: "in"
+  ;
+
+syntax Cuerpo
+  = cuerpoBloque: Bloque b
+  | cuerpoExpresion: Expresion e
+  ;
+
+// ---------- Rutas, llamadas e instanciación ----------
+
+syntax RutaOVariable
+  = variable: Identificador id
+  | acceso: RutaOVariable ruta "." Identificador campo
+  | llamada: RutaOVariable ruta "(" {Expresion ","}* argumentos ")"
+  ;
+
+// Un "(" pegado al objeto se lee como argumentos del constructor, no como una instrucción nueva.
+syntax Instanciacion
+  = instanciacionConArgumentos: "new" Objeto ob "(" {Expresion ","}* argumentos ")" Bloque? cuerpo
+  | instanciacionSimple: "new" Objeto ob !>> "(" Bloque? cuerpo
+  ;
 
 // ---------- Expresiones (de mayor a menor precedencia) ----------
 
-syntax Expr
-  = intLit: IntLit n
-  | realLit: RealLit r
-  | boolTrue: "true"
-  | boolFalse: "false"
-  | strLit: StringLit s
-  | ref: Ref !>> "("
-  | newObj: "new" TypeRef tp NewArgs args Block? body
-  | newPlain: "new" TypeRef !>> "(" Block? body
-  | bracket "(" Expr e ")"
-  > right pow: Expr l "**" Expr r
-  > negate: "neg" Expr e
-  > left ( mul: Expr l "*" Expr r
-         | div: Expr l "/" Expr r
-         | modulo: Expr l "%" Expr r
+syntax Expresion
+  = numero: Numero n
+  | booleano: Booleano b
+  | cadena: Cadena c
+  | ruta: RutaOVariable !>> "("
+  | instanciacion: Instanciacion i
+  | bracket "(" Expresion e ")"
+  > negacion: "neg" Expresion e
+  > left ( multiplicacion: Expresion izq "*" Expresion der
+         | division: Expresion izq "/" Expresion der
+         | modulo: Expresion izq "%" Expresion der
+         | potencia: Expresion izq "**" Expresion der
          )
-  > left ( add: Expr l "+" Expr r
-         | sub: Expr l "-" Expr r
+  > left ( suma: Expresion izq "+" Expresion der
+         | resta: Expresion izq "-" Expresion der
          )
-  > non-assoc ( lt: Expr l "\<" Expr r
-              | gt: Expr l "\>" Expr r
-              | le: Expr l "\<=" Expr r
-              | ge: Expr l "\>=" Expr r
-              | ne: Expr l "\<\>" Expr r
-              | eqOp: Expr l "=" Expr r
+  > non-assoc ( menor: Expresion izq "\<" Expresion der
+              | mayor: Expresion izq "\>" Expresion der
+              | menorIgual: Expresion izq "\<=" Expresion der
+              | mayorIgual: Expresion izq "\>=" Expresion der
+              | distinto: Expresion izq "\<\>" Expresion der
+              | igual: Expresion izq "=" Expresion der
               )
-  > left andOp: Expr l "and" Expr r
-  > left orOp: Expr l "or" Expr r
-  > ifExpr: "if" Expr cond "then" Body thenB "else" Body elseB
+  > left ( conjuncion: Expresion izq "and" Expresion der
+         | disyuncion: Expresion izq "or" Expresion der
+         )
+  > condicional: "if" Expresion condicion "then" Cuerpo entonces "else" Cuerpo sino
   ;

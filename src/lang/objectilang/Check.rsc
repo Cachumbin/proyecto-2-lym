@@ -11,7 +11,7 @@ import lang::objectilang::Syntax;
 void checkExamples() {
   for (loc f <- |project://proyecto-2-lym/examples|.ls, f.extension == "obj") {
     try {
-      parse(#start[Program], f);
+      parse(#start[S], f);
       println("OK        <f.file>");
     }
     catch ParseError(loc l): {
