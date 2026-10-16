@@ -57,11 +57,18 @@ data AstInstanciacion
   | instanciacionSimple(AstObjeto ob, list[AstBloque] cuerpo)
   ;
 
+data AstParteCadena
+  = parteTexto(str t)
+  | parteVariable(str nombre)
+  | parteExpresion(AstExpresion e)
+  ;
+
 data AstExpresion
   = entero(int n)
   | decimal(real d)
   | booleano(bool b)
   | cadena(str c)
+  | cadenaCompuesta(list[AstParteCadena] partes)
   | ruta(AstRuta r)
   | instanciacion(AstInstanciacion i)
   | negacion(AstExpresion e)
@@ -81,4 +88,3 @@ data AstExpresion
   | disyuncion(AstExpresion izq, AstExpresion der)
   | condicional(AstExpresion condicion, AstCuerpo entonces, AstCuerpo sino)
   ;
-  

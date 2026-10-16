@@ -23,7 +23,8 @@ lexical EnteroTexto = [0-9]+ !>> [0-9];
 lexical Decimal = @category="Constant" DecimalTexto;
 lexical DecimalTexto = [0-9]+ "." [0-9]+ !>> [0-9];
 
-lexical Booleano = ("true" | "false") !>> [a-zA-Z0-9];
+lexical Booleano = @category="Constant" BooleanoTexto;
+lexical BooleanoTexto = ("true" | "false") !>> [a-zA-Z0-9];
 
 lexical Cadena = @category="Constant" CadenaTexto;
 lexical CadenaTexto = "\"" ElementoCadena* "\"";
@@ -164,3 +165,4 @@ syntax Expresion
          )
   > condicional: "if" Expresion condicion "then" Cuerpo entonces "else" Cuerpo sino
   ;
+  
