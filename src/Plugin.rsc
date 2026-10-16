@@ -9,10 +9,8 @@ import Syntax;
 // Con esto el editor resalta la sintaxis y marca los errores de parseo.
 Tree parsear(str entrada, loc origen) = parse(#start[S], entrada, origen);
 
-// Se escribe parser(parsear) y no parser(#start[S]): ParseTree también define
-// una función llamada parser, y con un tipo como argumento Rascal elige esa.
 set[LanguageService] objectilangContributions() = {
-  parser(parsear)
+  parsing(parsear)
 };
 
 // Se ejecuta una vez en la terminal de Rascal:
@@ -23,7 +21,7 @@ void main() {
     language(
       getProjectPathConfig(|project://proyecto-2-lym|),
       "Objectilang",
-      "obj",
+      {"obj"},
       "Plugin",
       "objectilangContributions"
     )

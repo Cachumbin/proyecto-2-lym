@@ -41,9 +41,11 @@ syntax Instruccion
   = ObjetoCreador
   | VariableDeclaracion
   | VariableAsignacion
-  | MetodoDeclaracion
+  | MetodoPrincipal
+  | MetodoExterno
+  | MetodoOverride
   | Ciclo
-  | instruccionExpresion: Expresion!igual e
+  | instruccionExpresion: Expresion!igual!conjuncion!disyuncion e
   ;
 
 syntax ObjetoCreador
@@ -80,12 +82,6 @@ syntax VariableDeclaracion
 syntax Inicializacion = "=" Expresion valor;
 
 syntax VariableAsignacion = variableAsignacion: RutaOVariable destino "=" Expresion valor;
-
-syntax MetodoDeclaracion
-  = MetodoPrincipal
-  | MetodoExterno
-  | MetodoOverride
-  ;
 
 syntax MetodoPrincipal = metodoPrincipal: "method" "main" Bloque b;
 
@@ -145,10 +141,10 @@ syntax Expresion
   | instanciacion: Instanciacion i
   | bracket "(" Expresion e ")"
   > negacion: "neg" Expresion e
+    > right potencia: Expresion izq "**" Expresion der
   > left ( multiplicacion: Expresion izq "*" Expresion der
          | division: Expresion izq "/" Expresion der
          | modulo: Expresion izq "%" Expresion der
-         | potencia: Expresion izq "**" Expresion der
          )
   > left ( suma: Expresion izq "+" Expresion der
          | resta: Expresion izq "-" Expresion der

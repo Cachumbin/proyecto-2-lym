@@ -1,0 +1,12 @@
+// Prioridad de operadores, asignaciones y cadenas
+val a = 2 * 3 ** 2
+val b = 2 ** 3 ** 2
+var c = 1.5 + a % 4 - 1
+var activo = neg false
+c = a > b and activo
+activo = c or true
+val mensaje = "a vale $a y b vale ${b + 1}"
+val mayor = if a >= b then "a" else "b"
+for (x in lista) {
+  print(x * 2)
+}
