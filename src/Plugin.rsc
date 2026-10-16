@@ -1,9 +1,9 @@
-module lang::objectilang::Plugin
+module Plugin
 
 import ParseTree;
 import util::LanguageServer;
 import util::Reflective;
-import lang::objectilang::Syntax;
+import Syntax;
 
 // Servicio de parseo: recibe el texto de un archivo y devuelve su árbol.
 // Con esto el editor resalta la sintaxis y marca los errores de parseo.
@@ -16,7 +16,7 @@ set[LanguageService] objectilangContributions() = {
 };
 
 // Se ejecuta una vez en la terminal de Rascal:
-//   import lang::objectilang::Plugin;
+//   import Plugin;
 //   main();
 void main() {
   registerLanguage(
@@ -24,7 +24,7 @@ void main() {
       getProjectPathConfig(|project://proyecto-2-lym|),
       "Objectilang",
       "obj",
-      "lang::objectilang::Plugin",
+      "Plugin",
       "objectilangContributions"
     )
   );

@@ -1,12 +1,12 @@
-module lang::objectilang::Check
+module Check
 
 import IO;
 import ParseTree;
-import lang::objectilang::Syntax;
+import Syntax;
 
 // Parsea cada archivo .obj de la carpeta examples y dice cuáles fallan.
 // Uso en la terminal de Rascal:
-//   import lang::objectilang::Check;
+//   import Check;
 //   checkExamples();
 void checkExamples() {
   for (loc f <- |project://proyecto-2-lym/examples|.ls, f.extension == "obj") {
