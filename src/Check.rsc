@@ -2,16 +2,12 @@ module Check
 
 import IO;
 import ParseTree;
-import Syntax;
+import Parser;
 
-// Parsea cada archivo .obj de la carpeta examples y dice cuáles fallan.
-// Uso en la terminal de Rascal:
-//   import Check;
-//   checkExamples();
 void checkExamples() {
-  for (loc f <- |project://proyecto-2-lym/examples|.ls, f.extension == "obj") {
+  for (loc f <- |project://proyecto-2-lym/examples|.ls, f.extension == "ol") {
     try {
-      parse(#start[S], f);
+      parsearArchivo(f);
       println("OK        <f.file>");
     }
     catch ParseError(loc l): {

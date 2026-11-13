@@ -1,0 +1,1 @@
+Fantasma.ladrar = method(): String

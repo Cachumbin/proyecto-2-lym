@@ -1,5 +1,7 @@
 module Syntax
 
+import Cadenas;
+
 layout Layout = EspacioOComentario* !>> [\ \t\n\r] !>> "//";
 
 lexical EspacioOComentario
@@ -26,14 +28,7 @@ lexical DecimalTexto = [0-9]+ "." [0-9]+ !>> [0-9];
 lexical Booleano = @category="Constant" BooleanoTexto;
 lexical BooleanoTexto = ("true" | "false") !>> [a-zA-Z0-9];
 
-lexical Cadena = @category="Constant" CadenaTexto;
-lexical CadenaTexto = "\"" ElementoCadena* "\"";
-lexical ElementoCadena
-  = CaracterTexto
-  | "$" "{" Expresion "}"
-  | "$" Identificador
-  ;
-lexical CaracterTexto = ![\"$];
+syntax Interpolacion = "${" Expresion e "}";
 
 start syntax S = programa: Instruccion* instrucciones;
 
@@ -52,7 +47,10 @@ syntax ObjetoCreador
   = objetoCreador: "object" NombreObjeto nombre ParametrosDefinicion? genericos Constructor? constructor Extiende? extiende
   ;
 
-syntax Objeto = objeto: NombreObjeto nombre ParametrosUso? parametros;
+syntax Objeto
+  = objeto: NombreObjeto nombre ParametrosUso? parametros
+  | tipoFuncion: "(" {Objeto ","}* parametros ")" "-\>" Objeto resultado
+  ;
 syntax Extiende = "extends" Objeto ob;
 
 syntax ParametrosDefinicion = "[" {ParametroDefinicion ","}+ parametros "]";
@@ -137,9 +135,10 @@ syntax Expresion
   | decimal: Decimal d
   | booleano: Booleano b
   | cadena: Cadena c
+  | caracter: Caracter c
   | ruta: RutaOVariable r !>> "("
   | instanciacion: Instanciacion i
-  | bracket "(" Expresion e ")"
+  | parentesis: "(" Expresion e ")"
   > negacion: "neg" Expresion e
     > right potencia: Expresion izq "**" Expresion der
   > left ( multiplicacion: Expresion izq "*" Expresion der
@@ -159,6 +158,10 @@ syntax Expresion
   > left ( conjuncion: Expresion izq "and" Expresion der
          | disyuncion: Expresion izq "or" Expresion der
          )
-  > condicional: "if" Expresion condicion "then" Cuerpo entonces "else" Cuerpo sino
+  > left ( condicional: "if" Expresion condicion "then" Cuerpo entonces "else" Expresion sino
+    | condicionalBloque: "if" Expresion condicion "then" Cuerpo entonces "else" Bloque sino
+    | lambda: "(" {ParametroMetodo ","}* parametros ")" "=\>" Expresion cuerpo
+    | lambdaBloque: "(" {ParametroMetodo ","}* parametros ")" "=\>" Bloque b
+    )
   ;
   

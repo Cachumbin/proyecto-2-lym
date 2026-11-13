@@ -14,7 +14,10 @@ data AstInstruccion
   | instruccionExpresion(AstExpresion e)
   ;
 
-data AstObjeto = objeto(str nombre, list[AstObjeto] argumentos);
+data AstObjeto
+  = objeto(str nombre, list[AstObjeto] argumentos)
+  | tipoFuncion(list[AstObjeto] parametros, AstObjeto resultado)
+  ;
 
 data AstParametroDefinicion
   = covariante(str nombre)
@@ -57,6 +60,10 @@ data AstInstanciacion
   | instanciacionSimple(AstObjeto ob, list[AstBloque] cuerpo)
   ;
 
+data AstCadena = cadenaLiteral(list[AstParteCadena] partes);
+
+data AstCaracter = caracterLiteral(str valor);
+
 data AstParteCadena
   = parteTexto(str t)
   | parteVariable(str nombre)
@@ -67,8 +74,9 @@ data AstExpresion
   = entero(int n)
   | decimal(real d)
   | booleano(bool b)
-  | cadena(str c)
-  | cadenaCompuesta(list[AstParteCadena] partes)
+  | cadena(AstCadena c)
+  | caracter(AstCaracter letra)
+  | parentesis(AstExpresion e)
   | ruta(AstRuta r)
   | instanciacion(AstInstanciacion i)
   | negacion(AstExpresion e)
@@ -86,5 +94,8 @@ data AstExpresion
   | igual(AstExpresion izq, AstExpresion der)
   | conjuncion(AstExpresion izq, AstExpresion der)
   | disyuncion(AstExpresion izq, AstExpresion der)
-  | condicional(AstExpresion condicion, AstCuerpo entonces, AstCuerpo sino)
+  | condicional(AstExpresion condicion, AstCuerpo entonces, AstExpresion sino)
+  | condicionalBloque(AstExpresion condicion, AstCuerpo entonces, AstBloque bloqueSino)
+  | lambda(list[AstParametroMetodo] parametros, AstExpresion cuerpo)
+  | lambdaBloque(list[AstParametroMetodo] parametros, AstBloque bloqueLambda)
   ;

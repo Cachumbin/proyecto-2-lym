@@ -2,6 +2,7 @@ module Parser
 
 import ParseTree;
 import Syntax;
+import Cadenas;
 
 start[S] parsearTexto(str texto, loc origen) = parse(#start[S], texto, origen);
 
